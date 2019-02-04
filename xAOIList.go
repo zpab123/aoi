@@ -151,9 +151,9 @@ func (sl *xAOIList) GetClearMarkedNeighbors(aoi *xzaoi) {
 	for prev != nil && prev.aoi.x >= minCoord {
 		if prev.markVal == 2 {
 			aoi.neighbors[prev] = struct{}{}
-			aoi.aoi.callback.OnEnterAOI(prev.aoi)
+			aoi.aoi.callback.OnEnterAoi(prev.aoi)
 			prev.neighbors[aoi] = struct{}{}
-			prev.aoi.callback.OnEnterAOI(aoi.aoi)
+			prev.aoi.callback.OnEnterAoi(aoi.aoi)
 		}
 		prev.markVal = 0
 		prev = prev.xPrev
@@ -164,9 +164,9 @@ func (sl *xAOIList) GetClearMarkedNeighbors(aoi *xzaoi) {
 	for next != nil && next.aoi.x <= maxCoord {
 		if next.markVal == 2 {
 			aoi.neighbors[next] = struct{}{}
-			aoi.aoi.callback.OnEnterAOI(next.aoi)
+			aoi.aoi.callback.OnEnterAoi(next.aoi)
 			next.neighbors[aoi] = struct{}{}
-			next.aoi.callback.OnEnterAOI(aoi.aoi)
+			next.aoi.callback.OnEnterAoi(aoi.aoi)
 		}
 		next.markVal = 0
 		next = next.xNext

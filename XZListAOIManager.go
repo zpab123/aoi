@@ -74,9 +74,9 @@ func (aoiman *XZListAOIManager) adjust(aoi *xzaoi) {
 		} else { // markVal < 2
 			// was neighbor, but not any more
 			delete(aoi.neighbors, neighbor)
-			aoi.aoi.callback.OnLeaveAOI(neighbor.aoi)
+			aoi.aoi.callback.OnLeaveAoi(neighbor.aoi)
 			delete(neighbor.neighbors, aoi)
-			neighbor.aoi.callback.OnLeaveAOI(aoi.aoi)
+			neighbor.aoi.callback.OnLeaveAoi(aoi.aoi)
 		}
 	}
 

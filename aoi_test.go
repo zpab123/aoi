@@ -34,7 +34,7 @@ type TestObj struct {
 	nCalc          int64
 }
 
-func (obj *TestObj) OnEnterAOI(otheraoi *AOI) {
+func (obj *TestObj) OnEnterAoi(otheraoi *AOI) {
 	if VERIFY_NEIGHBOR_COUNT {
 		other := obj.getObj(otheraoi)
 		if obj == other {
@@ -49,7 +49,7 @@ func (obj *TestObj) OnEnterAOI(otheraoi *AOI) {
 	}
 }
 
-func (obj *TestObj) OnLeaveAOI(otheraoi *AOI) {
+func (obj *TestObj) OnLeaveAoi(otheraoi *AOI) {
 	if VERIFY_NEIGHBOR_COUNT {
 		other := obj.getObj(otheraoi)
 		if obj == other {

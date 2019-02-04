@@ -1,50 +1,67 @@
+// /////////////////////////////////////////////////////////////////////////////
+// 灯塔
+
 package aoi
 
 import "log"
 
-type TowerAOIManager struct {
-	minX, maxX, minY, maxY Coord
-	towerRange             Coord
-	towers                 [][]tower
-	xTowerNum, yTowerNum   int
+// /////////////////////////////////////////////////////////////////////////////
+// TowerAoiManager
+
+// 灯塔管理
+type TowerAoiManager struct {
+	minX                 Coord
+	maxX                 Coord
+	minY                 Coord
+	maxY                 Coord
+	towerRange           Coord
+	towers               [][]tower
+	xTowerNum, yTowerNum int
 }
 
-func (aoiman *TowerAOIManager) Enter(aoi *AOI, x, y Coord) {
+func NewTowerAoiManager(minX, maxX, minY, maxY Coord, towerRange Coord) AOIManager {
+	aoiman := &TowerAoiManager{minX: minX, maxX: maxX, minY: minY, maxY: maxY, towerRange: towerRange}
+	aoiman.init()
+
+	return aoiman
+}
+
+func (this *TowerAoiManager) Enter(aoi *AOI, x, y Coord) {
 	aoi.x, aoi.y = x, y
 	obj := &aoiobj{aoi: aoi}
 	aoi.implData = obj
 
-	aoiman.visitWatchedTowers(x, y, aoi.dist, func(tower *tower) {
+	this.visitWatchedTowers(x, y, aoi.dist, func(tower *tower) {
 		tower.addWatcher(obj)
 	})
 
-	t := aoiman.getTowerXY(x, y)
+	t := this.getTowerXY(x, y)
 	t.addObj(obj, nil)
 }
 
-func (aoiman *TowerAOIManager) Leave(aoi *AOI) {
+func (this *TowerAoiManager) Leave(aoi *AOI) {
 	obj := aoi.implData.(*aoiobj)
 	obj.tower.removeObj(obj, true)
 
-	aoiman.visitWatchedTowers(aoi.x, aoi.y, aoi.dist, func(tower *tower) {
+	this.visitWatchedTowers(aoi.x, aoi.y, aoi.dist, func(tower *tower) {
 		tower.removeWatcher(obj)
 	})
 }
 
-func (aoiman *TowerAOIManager) Moved(aoi *AOI, x, y Coord) {
+func (this *TowerAoiManager) Moved(aoi *AOI, x, y Coord) {
 	oldx, oldy := aoi.x, aoi.y
 	aoi.x, aoi.y = x, y
 	obj := aoi.implData.(*aoiobj)
 	t0 := obj.tower
-	t1 := aoiman.getTowerXY(x, y)
+	t1 := this.getTowerXY(x, y)
 
 	if t0 != t1 {
 		t0.removeObj(obj, false)
 		t1.addObj(obj, t0)
 	}
 
-	oximin, oximax, oyimin, oyimax := aoiman.getWatchedTowers(oldx, oldy, aoi.dist)
-	ximin, ximax, yimin, yimax := aoiman.getWatchedTowers(x, y, aoi.dist)
+	oximin, oximax, oyimin, oyimax := this.getWatchedTowers(oldx, oldy, aoi.dist)
+	ximin, ximax, yimin, yimax := this.getWatchedTowers(x, y, aoi.dist)
 
 	for xi := oximin; xi <= oximax; xi++ {
 		for yi := oyimin; yi <= oyimax; yi++ {
@@ -52,7 +69,7 @@ func (aoiman *TowerAOIManager) Moved(aoi *AOI, x, y Coord) {
 				continue
 			}
 
-			tower := &aoiman.towers[xi][yi]
+			tower := &this.towers[xi][yi]
 			tower.removeWatcher(obj)
 		}
 	}
@@ -63,167 +80,190 @@ func (aoiman *TowerAOIManager) Moved(aoi *AOI, x, y Coord) {
 				continue
 			}
 
-			tower := &aoiman.towers[xi][yi]
+			tower := &this.towers[xi][yi]
 			tower.addWatcher(obj)
 		}
 	}
 }
 
-func (aoiman *TowerAOIManager) transXY(x, y Coord) (int, int) {
-	xi := int((x - aoiman.minX) / aoiman.towerRange)
-	yi := int((y - aoiman.minY) / aoiman.towerRange)
-	return aoiman.normalizeXi(xi), aoiman.normalizeYi(yi)
+func (this *TowerAoiManager) transXY(x, y Coord) (int, int) {
+	xi := int((x - this.minX) / this.towerRange)
+	yi := int((y - this.minY) / this.towerRange)
+	return this.normalizeXi(xi), this.normalizeYi(yi)
 }
 
-func (aoiman *TowerAOIManager) normalizeXi(xi int) int {
+func (this *TowerAoiManager) normalizeXi(xi int) int {
 	if xi < 0 {
 		xi = 0
-	} else if xi >= aoiman.xTowerNum {
-		xi = aoiman.xTowerNum - 1
+	} else if xi >= this.xTowerNum {
+		xi = this.xTowerNum - 1
 	}
 	return xi
 }
 
-func (aoiman *TowerAOIManager) normalizeYi(yi int) int {
+func (this *TowerAoiManager) normalizeYi(yi int) int {
 	if yi < 0 {
 		yi = 0
-	} else if yi >= aoiman.yTowerNum {
-		yi = aoiman.yTowerNum - 1
+	} else if yi >= this.yTowerNum {
+		yi = this.yTowerNum - 1
 	}
 	return yi
 }
 
-func (aoiman *TowerAOIManager) getTowerXY(x, y Coord) *tower {
-	xi, yi := aoiman.transXY(x, y)
-	return &aoiman.towers[xi][yi]
+func (this *TowerAoiManager) getTowerXY(x, y Coord) *tower {
+	xi, yi := this.transXY(x, y)
+	return &this.towers[xi][yi]
 }
 
-func (aoiman *TowerAOIManager) getWatchedTowers(x, y Coord, aoiDistance Coord) (int, int, int, int) {
-	ximin, yimin := aoiman.transXY(x-aoiDistance, y-aoiDistance)
-	ximax, yimax := aoiman.transXY(x+aoiDistance, y+aoiDistance)
-	//aoiTowerNum := int(aoiDistance/aoiman.towerRange) + 1
-	//ximid, yimid := aoiman.transXY(x, y)
-	//ximin, ximax := aoiman.normalizeXi(ximid-aoiTowerNum), aoiman.normalizeXi(ximid+aoiTowerNum)
-	//yimin, yimax := aoiman.normalizeYi(yimid-aoiTowerNum), aoiman.normalizeYi(yimid+aoiTowerNum)
+func (this *TowerAoiManager) getWatchedTowers(x, y Coord, aoiDistance Coord) (int, int, int, int) {
+	ximin, yimin := this.transXY(x-aoiDistance, y-aoiDistance)
+	ximax, yimax := this.transXY(x+aoiDistance, y+aoiDistance)
+	//aoiTowerNum := int(aoiDistance/this.towerRange) + 1
+	//ximid, yimid := this.transXY(x, y)
+	//ximin, ximax := this.normalizeXi(ximid-aoiTowerNum), this.normalizeXi(ximid+aoiTowerNum)
+	//yimin, yimax := this.normalizeYi(yimid-aoiTowerNum), this.normalizeYi(yimid+aoiTowerNum)
 	return ximin, ximax, yimin, yimax
 }
 
-func (aoiman *TowerAOIManager) visitWatchedTowers(x, y Coord, aoiDistance Coord, f func(*tower)) {
-	ximin, ximax, yimin, yimax := aoiman.getWatchedTowers(x, y, aoiDistance)
+func (this *TowerAoiManager) visitWatchedTowers(x, y Coord, aoiDistance Coord, f func(*tower)) {
+	ximin, ximax, yimin, yimax := this.getWatchedTowers(x, y, aoiDistance)
 	for xi := ximin; xi <= ximax; xi++ {
 		for yi := yimin; yi <= yimax; yi++ {
-			tower := &aoiman.towers[xi][yi]
+			tower := &this.towers[xi][yi]
 			f(tower)
 		}
 	}
 }
 
-func (aoiman *TowerAOIManager) init() {
-	numXSlots := int((aoiman.maxX-aoiman.minX)/aoiman.towerRange) + 1
-	aoiman.xTowerNum = numXSlots
-	numYSlots := int((aoiman.maxY-aoiman.minY)/aoiman.towerRange) + 1
-	aoiman.yTowerNum = numYSlots
-	aoiman.towers = make([][]tower, numXSlots)
+func (this *TowerAoiManager) init() {
+	numXSlots := int((this.maxX-this.minX)/this.towerRange) + 1
+	this.xTowerNum = numXSlots
+	numYSlots := int((this.maxY-this.minY)/this.towerRange) + 1
+	this.yTowerNum = numYSlots
+	this.towers = make([][]tower, numXSlots)
 	for i := 0; i < numXSlots; i++ {
-		aoiman.towers[i] = make([]tower, numYSlots)
+		this.towers[i] = make([]tower, numYSlots)
 		for j := 0; j < numYSlots; j++ {
-			aoiman.towers[i][j].init()
+			this.towers[i][j].init()
 		}
 	}
 }
 
-func NewTowerAOIManager(minX, maxX, minY, maxY Coord, towerRange Coord) AOIManager {
-	aoiman := &TowerAOIManager{minX: minX, maxX: maxX, minY: minY, maxY: maxY, towerRange: towerRange}
-	aoiman.init()
+// /////////////////////////////////////////////////////////////////////////////
+// tower
 
-	return aoiman
-}
-
+// 灯塔对象
 type tower struct {
-	objs     map[*aoiobj]struct{}
-	watchers map[*aoiobj]struct{}
+	objs     map[*aoiobj]struct{} // 对象
+	watchers map[*aoiobj]struct{} // 观察者
 }
 
-func (t *tower) init() {
-	t.objs = map[*aoiobj]struct{}{}
-	t.watchers = map[*aoiobj]struct{}{}
+// 数据初始化
+func (this *tower) init() {
+	this.objs = map[*aoiobj]struct{}{}
+	this.watchers = map[*aoiobj]struct{}{}
 }
 
-func (t *tower) addObj(obj *aoiobj, fromOtherTower *tower) {
-	obj.tower = t
-	t.objs[obj] = struct{}{}
+// 添加1个对象
+func (this *tower) addObj(obj *aoiobj, fromOtherTower *tower) {
+	// 加入对象列表
+	obj.tower = this
+	this.objs[obj] = struct{}{}
+
+	// 通知观察者
 	if fromOtherTower == nil {
-		for watcher := range t.watchers {
+		for watcher := range this.watchers {
 			if watcher == obj {
 				continue
 			}
-			watcher.aoi.callback.OnEnterAOI(obj.aoi)
+			watcher.aoi.callback.OnEnterAoi(obj.aoi)
 		}
 	} else {
-		// obj moved from other tower to this tower
+		// 从其他 tower 移动到本 tower
 		for watcher := range fromOtherTower.watchers {
 			if watcher == obj {
-				continue
+				continue // 对象自己
 			}
-			if _, ok := t.watchers[watcher]; ok {
-				continue
+
+			if _, ok := this.watchers[watcher]; ok {
+				continue // 观察者重合
 			}
-			watcher.aoi.callback.OnLeaveAOI(obj.aoi)
+
+			watcher.aoi.callback.OnLeaveAoi(obj.aoi) // 通知离开
 		}
-		for watcher := range t.watchers {
+
+		// 通知本 tower 进入消息
+		for watcher := range this.watchers {
 			if watcher == obj {
-				continue
+				continue // 对象自己
 			}
+
 			if _, ok := fromOtherTower.watchers[watcher]; ok {
-				continue
+				continue // 观察者重合
 			}
-			watcher.aoi.callback.OnEnterAOI(obj.aoi)
+
+			watcher.aoi.callback.OnEnterAoi(obj.aoi) // 通知进入
 		}
 	}
 }
 
-func (t *tower) removeObj(obj *aoiobj, notifyWatchers bool) {
+// 移除1个 对象
+func (this *tower) removeObj(obj *aoiobj, notifyWatchers bool) {
 	obj.tower = nil
-	delete(t.objs, obj)
+	delete(this.objs, obj)
+
 	if notifyWatchers {
-		for watcher := range t.watchers {
+		for watcher := range this.watchers {
 			if watcher == obj {
 				continue
 			}
-			watcher.aoi.callback.OnLeaveAOI(obj.aoi)
+
+			watcher.aoi.callback.OnLeaveAoi(obj.aoi)
 		}
 	}
 }
 
-func (t *tower) addWatcher(obj *aoiobj) {
-	if _, ok := t.watchers[obj]; ok {
-		log.Panicf("duplicate add watcher")
+// 添加1个观察者
+func (this *tower) addWatcher(obj *aoiobj) {
+	if _, ok := this.watchers[obj]; ok {
+		log.Panicf("添加观察者异常：重复添加")
 	}
-	t.watchers[obj] = struct{}{}
-	// now obj can see all objs under this tower
-	for neighbor := range t.objs {
+
+	this.watchers[obj] = struct{}{}
+
+	// 通知其他对象
+	for neighbor := range this.objs {
 		if neighbor == obj {
 			continue
 		}
-		obj.aoi.callback.OnEnterAOI(neighbor.aoi)
+
+		obj.aoi.callback.OnEnterAoi(neighbor.aoi)
 	}
 }
 
-func (t *tower) removeWatcher(obj *aoiobj) {
-	if _, ok := t.watchers[obj]; !ok {
-		log.Panicf("duplicate remove watcher")
+// 移除1个观察者
+func (this *tower) removeWatcher(obj *aoiobj) {
+	if _, ok := this.watchers[obj]; !ok {
+		log.Panicf("添加观察者异常：观察者不存在")
 	}
 
-	delete(t.watchers, obj)
-	for neighbor := range t.objs {
+	delete(this.watchers, obj)
+
+	// 通知其他对象
+	for neighbor := range this.objs {
 		if neighbor == obj {
 			continue
 		}
-		obj.aoi.callback.OnLeaveAOI(neighbor.aoi)
+
+		obj.aoi.callback.OnLeaveAoi(neighbor.aoi)
 	}
 }
 
+// /////////////////////////////////////////////////////////////////////////////
+// aoiobj
+
+// 灯塔监控对象
 type aoiobj struct {
-	aoi   *AOI
-	tower *tower
+	aoi   *Aoi   // aoi 对象
+	tower *tower // 灯塔对象
 }
