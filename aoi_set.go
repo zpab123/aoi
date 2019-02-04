@@ -1,16 +1,27 @@
+// /////////////////////////////////////////////////////////////////////////////
+// aoi 包模型
+
 package aoi
 
-type AOISet map[*AOI]struct{}
+// /////////////////////////////////////////////////////////////////////////////
+// AoiSet 对象
 
-func (s AOISet) Add(aoi *AOI) {
-	s[aoi] = struct{}{}
+// Aoi 保存对象
+type AoiSet map[*Aoi]struct{}
+
+// 添加1个 aoi 对象
+func (this AoiSet) Add(aoi *Aoi) {
+	this[aoi] = struct{}{}
 }
 
-func (s AOISet) Remove(aoi *AOI) {
-	delete(s, aoi)
+// 移除1个 aoi 对象
+func (this AoiSet) Remove(aoi *Aoi) {
+	delete(this, aoi)
 }
 
-func (s AOISet) Contains(aoi *AOI) (ok bool) {
-	_, ok = s[aoi]
+// 是否包含某个 aoi 对象
+func (this AoiSet) Contains(aoi *Aoi) (ok bool) {
+	_, ok = this[aoi]
+
 	return
 }

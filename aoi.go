@@ -1,31 +1,30 @@
+// /////////////////////////////////////////////////////////////////////////////
+// Aoi 包模型
+
 package aoi
 
-// Coord is the type for coordinate axes values
+// 坐标值数值类型
 type Coord float32
 
-type AOI struct {
-	x    Coord
-	y    Coord
-	dist Coord
-	Data interface{}
+// /////////////////////////////////////////////////////////////////////////////
+// public api
 
-	callback AOICallback
-	implData interface{}
+// 对1个 *Aoi 对象初始化数据
+func InitAOI(a *Aoi, dist Coord, data interface{}, callback IAoiCallback) {
+	a.dist = dist
+	a.Data = data
+	a.callback = callback
 }
 
-func InitAOI(aoi *AOI, dist Coord, data interface{}, callback AOICallback) {
-	aoi.dist = dist
-	aoi.Data = data
-	aoi.callback = callback
-}
+// /////////////////////////////////////////////////////////////////////////////
+// Aoi 包模型
 
-type AOICallback interface {
-	OnEnterAOI(other *AOI)
-	OnLeaveAOI(other *AOI)
-}
-
-type AOIManager interface {
-	Enter(aoi *AOI, x, y Coord)
-	Leave(aoi *AOI)
-	Moved(aoi *AOI, x, y Coord)
+// aoi 对象
+type Aoi struct {
+	x        Coord        // x 轴坐标点
+	y        Coord        // y 轴坐标点
+	dist     Coord        // 距离
+	callback IAoiCallback // 未知
+	implData interface{}  // 未知
+	Data     interface{}  // 数据
 }
