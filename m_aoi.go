@@ -6,10 +6,10 @@ package aoi
 // /////////////////////////////////////////////////////////////////////////////
 // 接口
 
-//
-type IAoiCallback interface {
-	OnEnterAoi(other *Aoi)
-	OnLeaveAoi(other *Aoi)
+// 具备 aoi 特性的实体
+type IAoiEntity interface {
+	OnAoiEnter(other *Aoi) // 某个 aoi 对象进入
+	OnAoiLeave(other *Aoi) // 某个 aoi 对象离开
 }
 
 // aoi 管理接口
@@ -17,4 +17,19 @@ type IAoiManager interface {
 	Enter(aoi *Aoi, x, y Coord) // 进入
 	Leave(aoi *Aoi)             // 离开
 	Moved(aoi *Aoi, x, y Coord) // 移动
+}
+
+// /////////////////////////////////////////////////////////////////////////////
+// Coord
+
+// 坐标值数值类型
+type Coord float32
+
+// /////////////////////////////////////////////////////////////////////////////
+// aoiObject
+
+// 具有 aoi 特性的对象
+type aoiObject struct {
+	aoi   *Aoi   // 感兴趣区域
+	tower *tower // 灯塔对象
 }
