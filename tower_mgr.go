@@ -69,10 +69,48 @@ func (this *TowerManager) Leave(aoi *Aoi) {
 // 某个 aoi 对象移动
 func (this *TowerManager) Moved(aoi *Aoi, x, y Coord) {
 	// 位置更新
+	oldx, oldy := aoi.x, aoi.y
+	aoi.x, aoi.y = x, y
 
 	// 灯塔变化
+	oldTower := aoi.aoiObject.tower
+	newTower := this.getTower(x, y)
 
-	//
+	if oldTower != newTower {
+		oldTower.removeAoiObject(aoi.aoiObject, false)
+
+		newTower.addAoiObject(aoi.aoiObject, oldTower)
+	}
+
+	// 新/旧 观察范围
+	oldMinXt, oldMaxXt, oldMinYt, oldMaxYt := this.getWatchRange(oldx, oldy, aoi.distance)
+	newMinXt, newMaxXt, newMinYt, newMaxYt := this.getWatchRange(x, y, aoi.distance)
+
+	// 观察范围：离开某个旧塔
+	for i := oldMinXt; i <= oldMaxXt; i++ {
+		for j := oldMinYt; j <= oldMaxYt; j++ {
+			if i >= newMinXt && i <= newMaxXt && j >= newMinYt && j <= newMaxYt {
+				continue
+			}
+
+			t := &this.towers[i][j]
+
+			t.removeWatcher(aoi.aoiObject)
+		}
+	}
+
+	// 观察范围：进入某个新塔
+	for i := newMinXt; i <= newMaxXt; i++ {
+		for j := newMinYt; j <= newMaxYt; j++ {
+			if i >= oldMinXt && i <= oldMaxXt && j >= oldMinYt && j <= oldMaxYt {
+				continue
+			}
+
+			t := &this.towers[i][j]
+
+			t.addWatcher(aoi.aoiObject)
+		}
+	}
 }
 
 // 初始化灯塔数据
@@ -95,7 +133,7 @@ func (this *TowerManager) init() {
 
 // 遍历以 x,y 为中心，aoiDistance 为半径范围内的所有灯塔
 func (this *TowerManager) visitTowers(x, y, aoiDistance Coord, f func(t *tower)) {
-	minXt, maxXt, minYt, maxYt := this.getTowerRange()
+	minXt, maxXt, minYt, maxYt := this.getWatchRange(x, y, aoiDistance)
 
 	for i := minXt; i < maxXt; i++ {
 		for j := minYt; j < maxYt; j++ {
@@ -106,8 +144,8 @@ func (this *TowerManager) visitTowers(x, y, aoiDistance Coord, f func(t *tower))
 	}
 }
 
-// 根据 x,y aoiDistance 计算 灯塔坐标范围
-func (this *TowerManager) getTowerRange(x, y, aoiDistance Coord) (int, int, int, int) {
+// 根据 x,y aoiDistance 计算观察范围
+func (this *TowerManager) getWatchRange(x, y, aoiDistance Coord) (int, int, int, int) {
 	minXt, minYt := this.getTowerPos(x-aoiDistance, y-aoiDistance)
 	maxXt, maxYt := this.getTowerPos(x+aoiDistance, y+aoiDistance)
 
