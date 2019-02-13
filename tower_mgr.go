@@ -36,7 +36,7 @@ func NewTowerManager(startX, endX, startY, endY, towerRange Coord) IAoiManager {
 // 某个 aoi 对象进入
 func (this *TowerManager) Enter(aoi *Aoi, x, y Coord) {
 	aoi.x = x
-	aoiy = y
+	aoi.y = y
 
 	obj := &aoiObject{
 		aoi: aoi,
@@ -51,14 +51,14 @@ func (this *TowerManager) Enter(aoi *Aoi, x, y Coord) {
 
 	// 添加对象
 	t := this.getTower(x, y)
-	t.addObj(obj)
+	t.addAoiObject(obj, nil)
 }
 
 // 某个 aoi 对象离开
 func (this *TowerManager) Leave(aoi *Aoi) {
 	// 移除对象
 	obj := aoi.aoiObject
-	obj.tower.removeObj(obj, true)
+	obj.tower.removeAoiObject(obj, true)
 
 	// 移除观察者
 	this.visitTowers(aoi.x, aoi.y, aoi.distance, func(t *tower) {
@@ -184,7 +184,7 @@ func (this *TowerManager) normalizeYt(yt int) int {
 
 // 获取 x,y 坐标对应的灯塔指针
 func (this *TowerManager) getTower(x, y Coord) *tower {
-	xt, yt := this.getTowerPos()
+	xt, yt := this.getTowerPos(x, y)
 
 	return &this.towers[xt][yt]
 }

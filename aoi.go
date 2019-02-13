@@ -7,10 +7,10 @@ package aoi
 // public api
 
 // 对1个 *Aoi 对象初始化数据
-func InitAOI(a *Aoi, dist Coord, data interface{}, callback IAoiCallback) {
+func InitAOI(a *Aoi, dist Coord, data interface{}, entity IAoiEntity) {
 	a.distance = dist
 	a.Data = data
-	a.callback = callback
+	a.entity = entity
 }
 
 // /////////////////////////////////////////////////////////////////////////////
